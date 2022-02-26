@@ -69,6 +69,41 @@ blocks:
     coordinate: [184, 12]
     rotation: 0
     state: enabled
+- name: blocks_file_sink_0
+  id: blocks_file_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    append: 'False'
+    comment: ''
+    file: /home/pi/GitHub/M17_SX1276_Testing/tmp/rx_test.m17
+    type: short
+    unbuffered: 'False'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1160, 204.0]
+    rotation: 0
+    state: true
+- name: blocks_float_to_short_0
+  id: blocks_float_to_short
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    scale: '1'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1000, 220.0]
+    rotation: 0
+    state: true
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
   parameters:
@@ -360,8 +395,10 @@ blocks:
     state: true
 
 connections:
+- [blocks_float_to_short_0, '0', blocks_file_sink_0, '0']
 - [blocks_multiply_const_vxx_0, '0', blocks_multiply_const_vxx_1, '0']
 - [blocks_multiply_const_vxx_0, '0', qtgui_time_sink_x_0, '0']
+- [blocks_multiply_const_vxx_1, '0', blocks_float_to_short_0, '0']
 - [blocks_multiply_const_vxx_1, '0', qtgui_time_sink_x_0_0, '0']
 - [blocks_short_to_float_0, '0', blocks_multiply_const_vxx_0, '0']
 - [blocks_throttle_0, '0', blocks_short_to_float_0, '0']
@@ -369,3 +406,4 @@ connections:
 
 metadata:
   file_format: 1
+  grc_version: v3.11.0.0git-38-g72311c07
