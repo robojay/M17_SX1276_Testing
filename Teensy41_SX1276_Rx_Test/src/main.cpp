@@ -66,12 +66,27 @@ volatile uint8_t broadcastBuf[totalBuffers][bufferSize];
 volatile int bufNumber = 0;
 volatile int bufIndex = 0;
 volatile int sendBuf = -1;
+volatile double deviation = 0.0;
+volatile int deviationInt = 0.0;
+
+const double in_hz_per_bit = 61.0;     // SX1276
+const double out_bit_per_hz = 8.96;    // m17-demod expectation
+const double deviationConversion = in_hz_per_bit * out_bit_per_hz;
+
+// send either raw values from the frequency offset register (true)
+// or scaled valued for m17-demod (false)
+// useful for linux command line like:
+// nc -u -l 8888 -k | m17-demod -l -v | play -b 16 -r 8000 -c1 -t s16 -
+const bool rawDeviation = false;
 
 static void timer_callback() {
   digitalWrite(debugPin, HIGH);
 
   sxRead(0x1d, sxBuf, 2);
   frequencyOffset = (int16_t)(sxBuf[0])<<8 | sxBuf[1];
+  deviation = float(frequencyOffset) * deviationConversion;
+  deviation = constrain(deviation, -32768.0, 32767.0);
+  deviationInt = (int)round(deviation);
 
   if (abs(frequencyOffset) <= zeroBeatRange) {
     digitalWrite(zeroBeatPin, HIGH);
@@ -80,8 +95,15 @@ static void timer_callback() {
     digitalWrite(zeroBeatPin, LOW);
   }
 
-  broadcastBuf[bufNumber][bufIndex++] = sxBuf[1];
-  broadcastBuf[bufNumber][bufIndex++] = sxBuf[0];
+  if (rawDeviation) {
+    broadcastBuf[bufNumber][bufIndex++] = sxBuf[1];
+    broadcastBuf[bufNumber][bufIndex++] = sxBuf[0];
+  }
+  else {
+    broadcastBuf[bufNumber][bufIndex++] = (uint8_t)(deviationInt & 0xff);
+    broadcastBuf[bufNumber][bufIndex++] = (uint8_t)((deviationInt >> 8) & 0xff);
+  }
+
   if (bufIndex >= bufferSize) {
     // swap buffer
     // send buffer
